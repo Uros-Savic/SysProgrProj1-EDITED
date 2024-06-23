@@ -1,11 +1,9 @@
-﻿using NHibernate.Cache;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Net;
 using System.Text;
-using System.IO;
 using System.Threading;
 
 namespace MultiThreadedWebServer
@@ -13,8 +11,6 @@ namespace MultiThreadedWebServer
     internal class Server
     {
         static readonly string RootFolder = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..");
-        static readonly Dictionary<string, byte[]> ResponseCache = new();
-        static readonly object CacheLock = new();
         static int index = 0;
 
         public static void StartWebServer(HttpListener listener)
@@ -23,7 +19,7 @@ namespace MultiThreadedWebServer
             listener.Start();
             Console.WriteLine("Listening for requests.");
 
-            while (listener.IsListening)    
+            while (listener.IsListening)
             {
                 HandleRequest(listener.GetContext());
             }
@@ -41,52 +37,44 @@ namespace MultiThreadedWebServer
                 string filePath = Path.Combine(RootFolder, requestUrl.TrimStart('/'));
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                if (File.Exists(filePath))
-                {
-                    byte[] cachedResponse;
-                    lock (CacheLock)
-                    {
-                        if (ResponseCache.ContainsKey(requestUrl))
-                        {
-                            cachedResponse = ResponseCache[requestUrl];
-                            Console.WriteLine("Cached response found.");
-                            Console.WriteLine($"Request processed in {stopwatch.ElapsedMilliseconds} milliseconds.");
 
-                            response.OutputStream.Write(cachedResponse, 0, cachedResponse.Length);
-                            response.Close();
-                            return;
-                        }
-                    }
-                    if (FindFileType(filePath))
-                    {
-                        try
-                        {
-                            String a = Logic.ConvertToGif(filePath, ++index).ToString();
-                            byte[] fileBytes = File.ReadAllBytes(a);
-                            lock (CacheLock)
-                            {
-                                ResponseCache[requestUrl] = fileBytes;
-                            }
-                            response.ContentType = "image/gif";
-                            response.ContentLength64 = fileBytes.Length;
-                            response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
-                            Console.WriteLine("A .gif file has been created.");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                        }
-                    }
-                    else
-                    {
-                        response.StatusCode = (int)HttpStatusCode.NotFound;
-                        string errorMessage = $"File not compatible";
-                        byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
-                        response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
-                        Console.WriteLine($"File type not compatible.");
-                    }
+                if (!FindFileType(filePath))
+                {
+                    response.StatusCode = (int)HttpStatusCode.NotFound;
+                    string errorMessage = $"File type not supported or recognized.";
+                    byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
+                    response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
+                    Console.WriteLine($"File type not supported or recognized.");
+                    response.Close();
+                    stopwatch.Stop();
+                    Console.WriteLine($"Request processed in {stopwatch.ElapsedMilliseconds} milliseconds.");
+                    return;
                 }
-                else
+
+                try
+                {
+                    byte[] cachedResponse = CacheManager.Get(requestUrl);
+                    if (cachedResponse != null)
+                    {
+                        Console.WriteLine("Cached response found.");
+                        Console.WriteLine($"Request processed in {stopwatch.ElapsedMilliseconds} milliseconds.");
+
+                        response.OutputStream.Write(cachedResponse, 0, cachedResponse.Length);
+                        response.Close();
+                        return;
+                    }
+
+                    string convertedFilePath = Logic.ConvertToGif(filePath, ++index).ToString();
+                    byte[] fileBytes = File.ReadAllBytes(convertedFilePath);
+
+                    CacheManager.Set(requestUrl, fileBytes, 15); 
+
+                    response.ContentType = "image/gif";
+                    response.ContentLength64 = fileBytes.Length;
+                    response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
+                    Console.WriteLine("A .gif file has been created.");
+                }
+                catch (FileNotFoundException)
                 {
                     response.StatusCode = (int)HttpStatusCode.NotFound;
                     string errorMessage = $"File not found: {requestUrl}";
@@ -94,6 +82,15 @@ namespace MultiThreadedWebServer
                     response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
                     Console.WriteLine($"File not found: {requestUrl}");
                 }
+                catch (Exception ex)
+                {
+                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    string errorMessage = $"Server error: {ex.Message}";
+                    byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
+                    response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
+                    Console.WriteLine($"Server error: {ex.Message}");
+                }
+
                 response.Close();
                 stopwatch.Stop();
                 Console.WriteLine($"Request processed in {stopwatch.ElapsedMilliseconds} milliseconds.");
@@ -103,7 +100,6 @@ namespace MultiThreadedWebServer
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 response.Close();
                 Console.WriteLine("Request is null.");
-
             }
         }
 
@@ -125,7 +121,5 @@ namespace MultiThreadedWebServer
                 Console.WriteLine("Web server stopped.");
             }
         }
-
-
     }
 }
