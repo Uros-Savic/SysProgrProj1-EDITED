@@ -67,7 +67,7 @@ namespace MultiThreadedWebServer
                     string convertedFilePath = Logic.ConvertToGif(filePath, ++index).ToString();
                     byte[] fileBytes = File.ReadAllBytes(convertedFilePath);
 
-                    CacheManager.Set(requestUrl, fileBytes, 15); 
+                    CacheManager.Set(requestUrl, fileBytes, 5); 
 
                     response.ContentType = "image/gif";
                     response.ContentLength64 = fileBytes.Length;

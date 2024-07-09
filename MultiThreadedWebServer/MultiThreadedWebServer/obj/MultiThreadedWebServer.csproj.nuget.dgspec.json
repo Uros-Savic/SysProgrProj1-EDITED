@@ -51,6 +51,10 @@
             "SixLabors.ImageSharp": {
               "target": "Package",
               "version": "[3.1.4, )"
+            },
+            "System.Runtime.Caching": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [
