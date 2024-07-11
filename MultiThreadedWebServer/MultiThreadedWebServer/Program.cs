@@ -19,6 +19,7 @@ namespace MultiThreadedWebServer
                 listener = new HttpListener();
                 Server.StartWebServer(listener);
                 Console.WriteLine("Web server started.");
+                Console.ReadLine();
             }
             catch (Exception ex)
             {

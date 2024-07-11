@@ -21,7 +21,11 @@ namespace MultiThreadedWebServer
 
             while (listener.IsListening)
             {
-                HandleRequest(listener.GetContext());
+                ThreadPool.QueueUserWorkItem((state) =>
+                {
+                    HttpListenerContext context = (HttpListenerContext)state;
+                    HandleRequest(context);
+                }, listener.GetContext());
             }
         }
 
@@ -40,12 +44,7 @@ namespace MultiThreadedWebServer
 
                 if (!FindFileType(filePath))
                 {
-                    response.StatusCode = (int)HttpStatusCode.NotFound;
-                    string errorMessage = $"File type not supported or recognized.";
-                    byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
-                    response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
-                    Console.WriteLine($"File type not supported or recognized.");
-                    response.Close();
+                    SendErrorResponse(response, HttpStatusCode.NotFound, "File type not supported or recognized.");
                     stopwatch.Stop();
                     Console.WriteLine($"Request processed in {stopwatch.ElapsedMilliseconds} milliseconds.");
                     return;
@@ -59,36 +58,25 @@ namespace MultiThreadedWebServer
                         Console.WriteLine("Cached response found.");
                         Console.WriteLine($"Request processed in {stopwatch.ElapsedMilliseconds} milliseconds.");
 
-                        response.OutputStream.Write(cachedResponse, 0, cachedResponse.Length);
-                        response.Close();
+                        SendResponse(response, HttpStatusCode.OK, "image/gif", cachedResponse);
                         return;
                     }
 
                     string convertedFilePath = Logic.ConvertToGif(filePath, ++index).ToString();
                     byte[] fileBytes = File.ReadAllBytes(convertedFilePath);
 
-                    CacheManager.Set(requestUrl, fileBytes, 5); 
+                    CacheManager.Set(requestUrl, fileBytes, 5);
 
-                    response.ContentType = "image/gif";
-                    response.ContentLength64 = fileBytes.Length;
-                    response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
+                    SendResponse(response, HttpStatusCode.OK, "image/gif", fileBytes);
                     Console.WriteLine("A .gif file has been created.");
                 }
                 catch (FileNotFoundException)
                 {
-                    response.StatusCode = (int)HttpStatusCode.NotFound;
-                    string errorMessage = $"File not found: {requestUrl}";
-                    byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
-                    response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
-                    Console.WriteLine($"File not found: {requestUrl}");
+                    SendErrorResponse(response, HttpStatusCode.NotFound, $"File not found: {requestUrl}");
                 }
                 catch (Exception ex)
                 {
-                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    string errorMessage = $"Server error: {ex.Message}";
-                    byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
-                    response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
-                    Console.WriteLine($"Server error: {ex.Message}");
+                    SendErrorResponse(response, HttpStatusCode.InternalServerError, $"Server error: {ex.Message}");
                 }
 
                 response.Close();
@@ -97,10 +85,29 @@ namespace MultiThreadedWebServer
             }
             else
             {
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                SendErrorResponse(response, HttpStatusCode.BadRequest, "Request is null.");
                 response.Close();
                 Console.WriteLine("Request is null.");
             }
+        }
+
+        static void SendResponse(HttpListenerResponse response, HttpStatusCode statusCode, string contentType, byte[] contentBytes)
+        {
+            response.StatusCode = (int)statusCode;
+            response.ContentType = contentType;
+            response.ContentLength64 = contentBytes.Length;
+            response.OutputStream.Write(contentBytes, 0, contentBytes.Length);
+            response.Close();
+            Console.WriteLine($"HTTP {(int)statusCode} {statusCode.ToString()}");
+        }
+
+        static void SendErrorResponse(HttpListenerResponse response, HttpStatusCode statusCode, string errorMessage)
+        {
+            response.StatusCode = (int)statusCode;
+            byte[] errorBytes = Encoding.UTF8.GetBytes(errorMessage);
+            response.OutputStream.Write(errorBytes, 0, errorBytes.Length);
+            response.Close();
+            Console.WriteLine($"HTTP {(int)statusCode} {statusCode.ToString()}: {errorMessage}");
         }
 
         static bool FindFileType(string filePath)

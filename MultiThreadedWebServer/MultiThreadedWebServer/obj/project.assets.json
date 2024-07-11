@@ -6250,11 +6250,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-main\\MultiThreadedWebServer\\MultiThreadedWebServer\\MultiThreadedWebServer.csproj",
+      "projectUniqueName": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-EDITED\\MultiThreadedWebServer\\MultiThreadedWebServer\\MultiThreadedWebServer.csproj",
       "projectName": "MultiThreadedWebServer",
-      "projectPath": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-main\\MultiThreadedWebServer\\MultiThreadedWebServer\\MultiThreadedWebServer.csproj",
+      "projectPath": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-EDITED\\MultiThreadedWebServer\\MultiThreadedWebServer\\MultiThreadedWebServer.csproj",
       "packagesPath": "C:\\Users\\mm558\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-main\\MultiThreadedWebServer\\MultiThreadedWebServer\\obj\\",
+      "outputPath": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-EDITED\\MultiThreadedWebServer\\MultiThreadedWebServer\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\mm558\\AppData\\Roaming\\NuGet\\NuGet.Config",

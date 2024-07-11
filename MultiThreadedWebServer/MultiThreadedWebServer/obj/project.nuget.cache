@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "5XOwxZ2HlkzeTWwa+KijHtu5/Jlzmau4vSonlQaswrkwCikUYqmmrjQVFYOAD3E+/5iSFodfcVziZUZrof4SAQ==",
+  "dgSpecHash": "MlN1CuvbTY7D1VNdKvn4tM4JgzdzAG9IkPpQ3X3uOefsRdlNcMgan7mxYqKTGZ8lNGknuxPGlvDJ5p8WKrv52w==",
   "success": true,
-  "projectFilePath": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-main\\MultiThreadedWebServer\\MultiThreadedWebServer\\MultiThreadedWebServer.csproj",
+  "projectFilePath": "C:\\Users\\mm558\\OneDrive\\Radna površina\\SysProgrProj1-EDITED\\MultiThreadedWebServer\\MultiThreadedWebServer\\MultiThreadedWebServer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\mm558\\.nuget\\packages\\antlr3.runtime\\3.5.1\\antlr3.runtime.3.5.1.nupkg.sha512",
     "C:\\Users\\mm558\\.nuget\\packages\\iesi.collections\\4.0.4\\iesi.collections.4.0.4.nupkg.sha512",
